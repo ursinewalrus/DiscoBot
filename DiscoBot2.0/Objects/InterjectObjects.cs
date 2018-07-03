@@ -7,6 +7,7 @@ namespace Discobot.Objects
     class InterjectObjects
     {
     }
+    //for Haikus
     public class SimilarMeanings
     {
         public string word { get; set; }
@@ -23,4 +24,5 @@ namespace Discobot.Objects
             this.tags = tags;
         }
     }
+
 }

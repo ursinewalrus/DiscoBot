@@ -66,7 +66,7 @@ namespace Discobot.Utilities
                 wordIndex = 0;
             }
             List<SimilarMeanings> possibleWords = wordLists[wordIndex].OrderByDescending(o => o.score).Where(o => o.numSyllables <= syls[sylIndex] && o.numSyllables < maxSyls).ToList();
-            //litterlly can find no word
+            //litterlly can find no words
 
             if (possibleWords.Count == 0 && maxSyls == 0)
             {
@@ -137,6 +137,26 @@ namespace Discobot.Utilities
                 //}
             }
             return pickedWords;
+        }
+
+        public static List<SimilarMeanings> analyzeLimrickWords(List<string> input)
+        {
+            List<List<SimilarMeanings>> rymInfo = new List<List<SimilarMeanings>>();
+            List<SimilarMeanings> wordInfo = new List<SimilarMeanings>();
+
+            foreach (string word in input)
+            {
+                string rymeInfoQS = BaseApiEndpoint + "words?rel_rhy=" + word + "&md=ps&qe=sp";
+                string wordInfoQS = BaseApiEndpoint + "words?sp=" + word + "&md=ps&qe=sp&max=1";
+
+                var rymeInfoJson = new WebClient().DownloadString(rymeInfoQS);
+                var wordInfoJson = new WebClient().DownloadString(wordInfoQS);
+
+                rymInfo.Add(JsonConvert.DeserializeObject<List<SimilarMeanings>>(rymeInfoJson));
+                wordInfo.AddRange(JsonConvert.DeserializeObject<List<SimilarMeanings>>(wordInfoJson));
+            }
+            ;
+            return new List<SimilarMeanings>();
         }
     }
 }
