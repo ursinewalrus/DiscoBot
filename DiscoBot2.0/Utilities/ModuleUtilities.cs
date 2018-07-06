@@ -13,6 +13,14 @@ namespace Discobot.Utilities
 {
     static class ModuleUtilities
     {
+
+        public enum ImageLocations {
+            Message,
+            Preview,
+            Attachment,
+            None
+        }
+
         public static async Task DeleteMessage(ICommandContext Context)
         {
             IMessage[] msg = { Context.Message };

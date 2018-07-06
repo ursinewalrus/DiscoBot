@@ -11,11 +11,26 @@ namespace GifHolder
         public List<GifFrame> Frames = new List<GifFrame>();
         public Gif(string path, string newPath, string file)
         {
-            Image img = Image.FromFile(path + file);
+            Image img;
+            if (Path.GetExtension(file) != ".gif")
+            {
+                var convertedImg = new Bitmap(path + file);
+                convertedImg.Save(path+ file + ".gif", ImageFormat.Gif);
+            }
+            img = Image.FromFile(path + file);
             //try these if cant not gif just skip
-            int frameNums = img.GetFrameCount(FrameDimension.Time);
-            byte[] times = img.GetPropertyItem(0x5100).Value;
-
+            int frameNums;
+            byte[] times;
+            try
+            {
+                frameNums = img.GetFrameCount(FrameDimension.Time);
+                times = img.GetPropertyItem(0x5100).Value;
+            }
+            catch
+            {
+                frameNums = 1;
+                times = new byte[]{1,1,1,1};
+            }
             for (int i = 0; i < frameNums; i++)
             {
                 int duration = BitConverter.ToInt32(times, 4 * i);

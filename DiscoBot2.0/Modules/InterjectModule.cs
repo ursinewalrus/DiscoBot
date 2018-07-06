@@ -41,7 +41,11 @@ namespace Discobot.Modules
         public async Task Limrick([Remainder]string input)
         {
             List<string> words = input.Split(' ').ToList();
-            List<SimilarMeanings> wordMeanings = InterjectUtilities.analyzeLimrickWords(words);
+            List<SimilarMeanings> wordMeanings = InterjectUtilities.getSentanceWordInfo(words);
+            int firstLineSyls = wordMeanings.Sum(x => x.numSyllables);
+            List<SimilarMeanings> rymesA = InterjectUtilities.getRymingWord(words.Last());
+
+
         }
     }
 }

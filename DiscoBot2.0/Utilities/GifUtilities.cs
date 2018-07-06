@@ -6,7 +6,7 @@ namespace Discobot.Utilities
 {
     class GifUtilities
     {
-        public static async Task DoFaceReplace(ICommandContext Context,string originalGif)
+        public static string DoFaceReplace(string originalGif)
         {
             GifProcessing.GifProcessing processor = new GifProcessing.GifProcessing("ImageManipulation");
             string dlLocation = processor.DownloadGif(originalGif);
@@ -14,9 +14,7 @@ namespace Discobot.Utilities
             int facePick = random.Next(0, 2);
             string face = (facePick == 0) ? "kk.png" : "lampreyme.png";
             var newGif = processor.GifFaceSwap(face, dlLocation);
-            await Context.Channel.SendFileAsync(newGif);
-            return;
-            ;
+            return newGif;
         }
     }
 }

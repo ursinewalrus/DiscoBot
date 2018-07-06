@@ -12,7 +12,7 @@ using Discobot.Utilities;
 using System.Collections.Generic;
 using Discobot.Modules;
 using Mono.Reflection;
-using Discobot.Modules;
+using System.Text.RegularExpressions;
 
 //https://discord.foxbot.me/docs/guides/commands/commands.html
 //https://github.com/Aux/Discord.Net-Example
@@ -72,31 +72,21 @@ namespace Discobot
             //move to config
             List<string> allowedChannels = new List<string>(new string[] { "bot-channel" });
 
-            string possibleImageUrl = "";
+            Tuple< ModuleUtilities.ImageLocations,string> imageWhere = CheckForImage(message);
 
-            try
+            if(imageWhere.Item1 != ModuleUtilities.ImageLocations.None)
             {
-                possibleImageUrl = message.Embeds.First().Thumbnail.ToString();
-            }
-            catch (Exception)
-            {
-                //
-            }
-
-            if (message.Content.Contains(".gif") || 
-                message.Content.Contains(".jpg") || 
-                message.Content.Contains(".png") || 
-                possibleImageUrl != "")
-            {
-                if(possibleImageUrl == "")
-                {
-                    possibleImageUrl = message.Content;
-                }
-                //var typingOnReplaceImage = context.Channel.EnterTypingState();
-                //await GifUtilities.DoFaceReplace(context, possibleImageUrl);
-                //typingOnReplaceImage.Dispose();
-
+                var typingOnReplaceImage = context.Channel.EnterTypingState();
+                var gif = GifUtilities.DoFaceReplace(imageWhere.Item2);
+                //lets do some dubious reflection
+                //PropertyInfo propInfo = typeof(SocketUserMessage).GetProperty("Attachments");
+                //FieldInfo contentField = propInfo.GetBackingField();
+                //contentField.SetValue(message, gif);
+                await context.Channel.SendMessageAsync(gif);
+                typingOnReplaceImage.Dispose();
                 return;
+               ;
+                //typingOnReplaceImage.Dispose();
             }
 
             #region wrong_channel
@@ -140,6 +130,36 @@ namespace Discobot
                 return true;
             }
             return false;
+        }
+
+        //change return
+        public Tuple<ModuleUtilities.ImageLocations, string> CheckForImage(SocketMessage message)
+        {
+            //shore up regex so i can just return th file matches
+            Regex matchFiles = new Regex("gif|png|jpg");
+
+            if (matchFiles.Match(message.Content).Success)
+            {
+                return Tuple.Create(ModuleUtilities.ImageLocations.Message, message.Content);
+            }
+
+            if ((message.Attachments.Count() > 0 && matchFiles.Match(message.Attachments.ToList()[0].Url).Success))
+            {
+                return Tuple.Create(ModuleUtilities.ImageLocations.Attachment, message.Attachments.ToList()[0].Url);
+            }
+
+            if (message.Embeds.Count >0 && matchFiles.Match(message.Embeds.First().Thumbnail.ToString()).Success)
+            {
+                return Tuple.Create(ModuleUtilities.ImageLocations.Preview,message.Embeds.First().Thumbnail.ToString());
+
+            }
+            return Tuple.Create(ModuleUtilities.ImageLocations.None,"none");
+
+        }
+
+        public SocketMessage ModifyMessageImage(SocketMessage message)
+        {
+            return message;
         }
     }
 }

@@ -45,11 +45,11 @@ namespace Discobot.Utilities
             int haikuType = random.Next(0, 2);
             if (haikuType == 0)
             {
-                haikuWords = InterjectUtilities.BuildHaiku(smArr, new List<SimilarMeanings>(), syls, true);
+                haikuWords = BuildHaiku(smArr, new List<SimilarMeanings>(), syls, true);
             }
             else
             {
-                haikuWords = InterjectUtilities.BuildHaiku(smArr, new List<SimilarMeanings>(), syls, false);
+                haikuWords = BuildHaiku(smArr, new List<SimilarMeanings>(), syls, false);
             }
             return haikuWords;
         }
@@ -139,24 +139,30 @@ namespace Discobot.Utilities
             return pickedWords;
         }
 
-        public static List<SimilarMeanings> analyzeLimrickWords(List<string> input)
+        public static List<SimilarMeanings> getSentanceWordInfo(List<string> input)
         {
-            List<List<SimilarMeanings>> rymInfo = new List<List<SimilarMeanings>>();
             List<SimilarMeanings> wordInfo = new List<SimilarMeanings>();
 
             foreach (string word in input)
             {
-                string rymeInfoQS = BaseApiEndpoint + "words?rel_rhy=" + word + "&md=ps&qe=sp";
                 string wordInfoQS = BaseApiEndpoint + "words?sp=" + word + "&md=ps&qe=sp&max=1";
 
-                var rymeInfoJson = new WebClient().DownloadString(rymeInfoQS);
                 var wordInfoJson = new WebClient().DownloadString(wordInfoQS);
 
-                rymInfo.Add(JsonConvert.DeserializeObject<List<SimilarMeanings>>(rymeInfoJson));
                 wordInfo.AddRange(JsonConvert.DeserializeObject<List<SimilarMeanings>>(wordInfoJson));
             }
             ;
-            return new List<SimilarMeanings>();
+            return wordInfo;
         }
+
+        public static List<SimilarMeanings> getRymingWord(string word)
+        {
+            string rymeInfoQS = BaseApiEndpoint + "words?rel_rhy=" + word + "&md=ps";
+            var rymeInfoJson = new WebClient().DownloadString(rymeInfoQS);
+            var rymInfo =  JsonConvert.DeserializeObject<List<SimilarMeanings>>(rymeInfoJson);
+            return rymInfo;
+        }
+
+
     }
 }

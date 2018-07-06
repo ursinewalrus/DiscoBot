@@ -20,6 +20,7 @@ namespace Discobot.Modules
     {
         private string GiphyKey => ConfigurationManager.AppSettings["giphykey"];
 
+        //drop in a command to do the try catch or not
         [Command("jiffy")]
         public async Task GiphyGet([Remainder] string input)
         {
@@ -30,7 +31,8 @@ namespace Discobot.Modules
             string originalGif = giffyToken.SelectToken("data").SelectToken("images").SelectToken("original").SelectToken("url").ToString();
             try
             {
-                await GifUtilities.DoFaceReplace(Context,originalGif);
+                string gif = GifUtilities.DoFaceReplace(originalGif);
+                await Context.Channel.SendFileAsync(gif);
                 return;
             }
             catch (Exception e)

@@ -169,7 +169,7 @@ namespace GifProcessing
             string dlLocation = "";
             using (var wc = new System.Net.WebClient())
             {
-                dlLocation = OldGifPath + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + ".gif";
+                dlLocation = OldGifPath + DateTimeOffset.UtcNow.ToUnixTimeSeconds() + (Path.GetExtension(url) ?? ".gif");
                 wc.DownloadFile(url, dlLocation);
             }
             return dlLocation;
