@@ -18,11 +18,11 @@ namespace Discobot.Modules
         [Command("haiku")]
         public async Task AlternateHaiku([Remainder]string input)
         {
-            List<SimilarMeanings> haikuWords = InterjectUtilities.FormatHaikuInput(input);
+            List<WordInfo> haikuWords = InterjectUtilities.FormatHaikuInput(input);
             //maybe for listen, refactor this into FormatHaikuInput
             string haiku = "";
             //here lets choose linebreaks
-            foreach (SimilarMeanings word in haikuWords)
+            foreach (WordInfo word in haikuWords)
             {
                 haiku += word.word + " " + word.newline;
             }
@@ -41,10 +41,6 @@ namespace Discobot.Modules
         public async Task Limrick([Remainder]string input)
         {
             List<string> words = input.Split(' ').ToList();
-            List<SimilarMeanings> wordMeanings = InterjectUtilities.getSentanceWordInfo(words);
-            int firstLineSyls = wordMeanings.Sum(x => x.numSyllables);
-            List<SimilarMeanings> rymesA = InterjectUtilities.getRymingWord(words.Last());
-
 
         }
     }

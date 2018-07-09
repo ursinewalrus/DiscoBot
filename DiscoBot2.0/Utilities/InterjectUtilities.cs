@@ -10,28 +10,28 @@ namespace Discobot.Utilities
 {
     class InterjectUtilities
     {
-        
-        private static string BaseApiEndpoint = @"https://api.datamuse.com/";
 
-        public static List<SimilarMeanings> FormatHaikuInput(string input)
+        private static string BaseApiEndpoint = @"https://api.datamuse.com/words?";
+
+        public static List<WordInfo> FormatHaikuInput(string input)
         {
             string[] splitInput = input.Split(' ');
             List<string> inputArr = splitInput.Where(word => word.Length > 2).ToList();
             Random random = new Random();
             //if (inputArr.Length < 3 || random.Next(0, 100)>5) return; //need at least 3 words for haiku, give 1/20 chance of trying
-            List<List<SimilarMeanings>> smArr = new List<List<SimilarMeanings>>();
+            List<List<WordInfo>> smArr = new List<List<WordInfo>>();
 
 
             int maxSyls = 0;
             foreach (string word in inputArr)
             {
 
-                string endpoint = BaseApiEndpoint + "words?ml=" + word + "&md=s";
+                string endpoint = BaseApiEndpoint + "ml=" + word + "&md=s";
                 var json = new WebClient().DownloadString(endpoint);
-                List<SimilarMeanings> sm = JsonConvert.DeserializeObject<List<SimilarMeanings>>(json);
+                List<WordInfo> sm = JsonConvert.DeserializeObject<List<WordInfo>>(json);
                 if (sm.Count > 0)
                 {
-                    List<SimilarMeanings> scoreSortedsmArr = sm.OrderByDescending(o => o.numSyllables)
+                    List<WordInfo> scoreSortedsmArr = sm.OrderByDescending(o => o.numSyllables)
                                                                .ThenBy(o => o.score)
                                                                .Where(o => o.numSyllables < 8)
                                                                .ToList();
@@ -41,15 +41,15 @@ namespace Discobot.Utilities
             }
             int[] syls = { 5, 7, 5 };
 
-            List<SimilarMeanings> haikuWords;
+            List<WordInfo> haikuWords;
             int haikuType = random.Next(0, 2);
             if (haikuType == 0)
             {
-                haikuWords = BuildHaiku(smArr, new List<SimilarMeanings>(), syls, true);
+                haikuWords = BuildHaiku(smArr, new List<WordInfo>(), syls, true);
             }
             else
             {
-                haikuWords = BuildHaiku(smArr, new List<SimilarMeanings>(), syls, false);
+                haikuWords = BuildHaiku(smArr, new List<WordInfo>(), syls, false);
             }
             return haikuWords;
         }
@@ -58,25 +58,25 @@ namespace Discobot.Utilities
         //wordIndex -> word in sentance on
         //maxSyls->syls less than to check
         //sylIndex -> what sylable to work on
-        public static List<SimilarMeanings> BuildHaiku(List<List<SimilarMeanings>> wordLists, List<SimilarMeanings> pickedWords, int[] syls, bool randomPick, int sylIndex = 0, int wordIndex = 0, int maxSyls = 8)
+        public static List<WordInfo> BuildHaiku(List<List<WordInfo>> wordLists, List<WordInfo> pickedWords, int[] syls, bool randomPick, int sylIndex = 0, int wordIndex = 0, int maxSyls = 8)
         {
             Random random = new Random();
             if (wordIndex == wordLists.Count)
             {
                 wordIndex = 0;
             }
-            List<SimilarMeanings> possibleWords = wordLists[wordIndex].OrderByDescending(o => o.score).Where(o => o.numSyllables <= syls[sylIndex] && o.numSyllables < maxSyls).ToList();
+            List<WordInfo> possibleWords = wordLists[wordIndex].OrderByDescending(o => o.score).Where(o => o.numSyllables <= syls[sylIndex] && o.numSyllables < maxSyls).ToList();
             //litterlly can find no words
 
             if (possibleWords.Count == 0 && maxSyls == 0)
             {
-                var nothing = new List<SimilarMeanings>();
+                var nothing = new List<WordInfo>();
                 nothing[0].word = "_null_";
                 return nothing;
             }
             else if (possibleWords.Count > 0)//if can find another word that fits
             {
-                SimilarMeanings pickSim;
+                WordInfo pickSim;
                 if (randomPick)
                 {
                     int pick = random.Next(0, possibleWords.Count);
@@ -116,7 +116,7 @@ namespace Discobot.Utilities
             else //backtrack
             {
                 wordIndex--;
-                SimilarMeanings lastSim = pickedWords.Last();
+                WordInfo lastSim = pickedWords.Last();
 
                 if ((sylIndex == 1 && syls[sylIndex] == 7) || (sylIndex == 2 && syls[sylIndex] == 5))
                 {
@@ -139,29 +139,45 @@ namespace Discobot.Utilities
             return pickedWords;
         }
 
-        public static List<SimilarMeanings> getSentanceWordInfo(List<string> input)
+        //goign to be removed for the fluent api
+        public static List<WordInfo> getSentanceWordInfo(List<string> input)
         {
-            List<SimilarMeanings> wordInfo = new List<SimilarMeanings>();
+            List<WordInfo> WordInfo = new List<WordInfo>();
 
             foreach (string word in input)
             {
-                string wordInfoQS = BaseApiEndpoint + "words?sp=" + word + "&md=ps&qe=sp&max=1";
+                string WordInfoQS = BaseApiEndpoint + "sp=" + word + "&md=ps&qe=sp&max=1";
 
-                var wordInfoJson = new WebClient().DownloadString(wordInfoQS);
+                var WordInfoJson = new WebClient().DownloadString(WordInfoQS);
 
-                wordInfo.AddRange(JsonConvert.DeserializeObject<List<SimilarMeanings>>(wordInfoJson));
+                WordInfo.AddRange(JsonConvert.DeserializeObject<List<WordInfo>>(WordInfoJson));
             }
             ;
-            return wordInfo;
+            return WordInfo;
         }
 
-        public static List<SimilarMeanings> getRymingWord(string word)
+        public static List<WordInfo> getRymingWord(string word)
         {
-            string rymeInfoQS = BaseApiEndpoint + "words?rel_rhy=" + word + "&md=ps";
+            string rymeInfoQS = BaseApiEndpoint + "rel_rhy=" + word + "&md=ps";
             var rymeInfoJson = new WebClient().DownloadString(rymeInfoQS);
-            var rymInfo =  JsonConvert.DeserializeObject<List<SimilarMeanings>>(rymeInfoJson);
+            var rymInfo =  JsonConvert.DeserializeObject<List<WordInfo>>(rymeInfoJson);
             return rymInfo;
         }
+
+        public static List<WordInfo> getWordMeansLike(string word)
+        {
+            string endpoint = BaseApiEndpoint + "ml=" + word + "&md=s";
+            var WordInfoJson = new WebClient().DownloadString(endpoint);
+            return JsonConvert.DeserializeObject<List<WordInfo>>(WordInfoJson);
+        }
+
+        public static List<WordInfo> getNextWord(string word)
+        {
+            string endpoint = BaseApiEndpoint + "ls=" + word;
+            var WordInfoJson = new WebClient().DownloadString(endpoint);
+            return JsonConvert.DeserializeObject<List<WordInfo>>(WordInfoJson);
+        }
+
 
 
     }

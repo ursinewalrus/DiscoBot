@@ -82,7 +82,14 @@ namespace Discobot
                 //PropertyInfo propInfo = typeof(SocketUserMessage).GetProperty("Attachments");
                 //FieldInfo contentField = propInfo.GetBackingField();
                 //contentField.SetValue(message, gif);
-                await context.Channel.SendMessageAsync(gif);
+                if (imageWhere.Item1 == ModuleUtilities.ImageLocations.Message)
+                {
+                    await context.Channel.SendMessageAsync(gif);
+                }
+                else
+                {
+                    await context.Channel.SendFileAsync(gif);
+                }
                 typingOnReplaceImage.Dispose();
                 return;
                ;
