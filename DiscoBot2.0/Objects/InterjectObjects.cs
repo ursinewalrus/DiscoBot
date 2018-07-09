@@ -137,5 +137,5 @@ namespace Discobot.Objects
     }
     //fluent experiment  https://scottlilly.com/how-to-create-a-fluent-interface-in-c/
 
-    var thing = QueryStringInfo.AddSearchWord("word").AddConstraintData(new List<string>() { "A", "A" }).AddMetaData(new List<string>() { "A" }).AddRelationType("A").ConstructQuery().RunQuery();
+   // var thing = QueryStringInfo.AddSearchWord("word").AddConstraintData(new List<string>() { "A", "A" }).AddMetaData(new List<string>() { "A" }).AddRelationType("A").ConstructQuery().RunQuery();
 }
