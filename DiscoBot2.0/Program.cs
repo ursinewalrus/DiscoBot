@@ -22,6 +22,7 @@ namespace Discobot
 {
     class Program
     {
+
         static BackgroundWorker Worker = new BackgroundWorker();
         string token = ConfigurationManager.AppSettings["apiKey"];
 
@@ -169,4 +170,5 @@ namespace Discobot
             return message;
         }
     }
+
 }

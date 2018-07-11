@@ -30,17 +30,13 @@ namespace Discobot.Modules
 
         }
 
-        // Limrick
-        // 7-10
-        // 7-10
-        // 7-10
-        // 5-7
-        // 5-7
-        // 7-10
+
+        //maybe allow some customization as to the types of limrick made
         [Command("limrick")]
         public async Task Limrick([Remainder]string input)
         {
             List<string> words = input.Split(' ').ToList();
+            var limrick = InterjectUtilities.BuildLimrick(words);
 
         }
     }

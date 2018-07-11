@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Text;
 
 namespace Discobot.Objects
@@ -13,10 +16,10 @@ namespace Discobot.Objects
         public string word { get; set; }
         public int score { get; set; }
         public int numSyllables { get; set; }
-        public string[] tags { get; set; }
+        public List<string> tags { get; set; }
         public string newline = "";
 
-        public WordInfo(string word, int score, int numSyllables, string[] tags)
+        public WordInfo(string word, int score, int numSyllables, List<string> tags)
         {
             this.word = word;
             this.score = score;
@@ -26,39 +29,10 @@ namespace Discobot.Objects
     }
 
     //probably not needed but possibly more extensible later
-    public class QueryStringInfo : ICanSetConstraintData, ICanSetMetaData, ICanSetRelatedWord, ICanDoRun
+    public class QueryStringBuilder : ICanConstructQuery, ICanDoRun
     {
 
-        private static Dictionary<string, string> QsConstraintOptions = new Dictionary<string, string>
-        {
-            {"meansLike", "ml" },
-            {"leftContext", "lc" },
-            {"rightContext", "rc" },
-            {"soundsLike", "sl" },
-            {"self","qe=" }
-
-        };
-
-        private static Dictionary<string, string> QsMetaDataOptions = new Dictionary<string, string>
-        {
-            {"partsOfSpeech", "p" },
-            {"syllables", "s" },
-            {"frequency", "f" }
-        };
-        //rel_
-        private static Dictionary<string, string> QsRelatedOptions = new Dictionary<string, string>
-        {
-            {"nounsModByAdj", "jja" },
-            {"adjModByNoun", "jjb" },
-            {"synonyms", "syn" },
-            {"assocWith", "trg" },
-            {"anyonyms", "ant" },
-            {"followers", "bga" },
-            {"predecessors", "bgb" },
-            {"rymes", "rhy" },
-            {"homophones", "hom" },
-        };
-        private List<string> QsConstraintData;
+        private List<string> QsConstraintData { get; set;  }
         public List<string> QsMetaData { get; set; }
         public string QsRelated { get; set; }
         public string Word { get; set; }
@@ -71,32 +45,33 @@ namespace Discobot.Objects
         /// <param name="QsConstraintData">Constraint options, uses keys from QsConstraintOptions</param>
         /// <param name="QsMetaData">General things to return with each word, use keys in QsMetaDataOptions</param>
         /// <param name="QsRelated">Only can use one of these, get related words, uses keys from QsRelatedOptions </param>
-        public QueryStringInfo(/*List<string> QsConstraintData, List<string> QsMetaData, string QsRelated,*/ string word)
+        public QueryStringBuilder(string word)
         {
-            //this.QsConstraintData = QsConstraintData;
-            //this.QsMetaData = QsMetaData;
-            //this.QsRelated = QsRelated;
             this.Word = word;
+            this.QsConstraintData = new List<string>();
+            this.QsMetaData = new List<string>();
+            this.QsRelated = "";
+            this.QueryString = BaseApiEndpoint;
         }
 
-        public static ICanSetConstraintData AddSearchWord(string word)
+        public static ICanConstructQuery AddSearchWord(string word)
         {
-            return new QueryStringInfo(word);
+            return new QueryStringBuilder(word);
         }
 
-        public ICanSetMetaData AddConstraintData(List<string> constraints)
+        public ICanConstructQuery AddConstraint(string constraint)
         {
-            this.QsConstraintData = constraints;
+            this.QsConstraintData.Add(constraint);
             return this;
         }
 
-        public ICanSetRelatedWord AddMetaData(List<string> metaTags)
+        public ICanConstructQuery AddMetaTag(string metaTag)
         {
-            this.QsMetaData = metaTags;
+            this.QsMetaData.Add(metaTag);
             return this;
         }
 
-        public QueryStringInfo AddRelationType(string relationType)
+        public ICanConstructQuery AddRelationType(string relationType)
         {
             this.QsRelated = relationType;
             return this;
@@ -104,38 +79,38 @@ namespace Discobot.Objects
 
         public ICanDoRun ConstructQuery()
         {
-            this.QueryString = "build this";
+            if (this.QsConstraintData.Contains(DataMuseQsArgs.ConstraintArgments.Self))
+            {
+                this.QueryString += "sp=" + this.Word + "&qe=sp&max=1&";
+                this.QsConstraintData.Remove(DataMuseQsArgs.ConstraintArgments.Self);
+            }
+            this.QueryString += (this.QsConstraintData.Count() > 0) ? String.Join("=" + this.Word, this.QsConstraintData) + "=" + this.Word + "&" : "";
+            this.QueryString += (this.QsMetaData.Count() > 0) ? "md="+ String.Join("",this.QsMetaData) + "&" : "";
+            this.QueryString += (this.QsRelated != "") ? "rel_" + this.QsRelated + "=" + this.Word : "";
             return this;
         }
         //what why clearly missing something
         List<WordInfo> ICanDoRun.RunQuery()
         {
-            return new List<WordInfo>();
+            var json = new WebClient().DownloadString(this.QueryString);
+            List<WordInfo> queryrResults = JsonConvert.DeserializeObject<List<WordInfo>>(json);
+            return queryrResults;
         }
     }
 
  
-    public interface ICanSetConstraintData
+   public interface ICanConstructQuery
     {
-        ICanSetRelatedWord AddMetaData(List<string> constraints);
-        ICanSetMetaData AddConstraintData(List<string> constraints);
-    }
+        ICanConstructQuery AddConstraint(string constraints);
+        ICanConstructQuery AddMetaTag(string metaTags);
+        ICanConstructQuery AddRelationType(string relation);
+        ICanDoRun ConstructQuery();
 
-    public interface ICanSetMetaData
-    {
-        ICanSetRelatedWord AddMetaData(List<string> metaTags);
-    }
-
-    public interface ICanSetRelatedWord
-    {
-        QueryStringInfo AddRelationType(string word);
     }
 
     public interface ICanDoRun
     {
         List<WordInfo> RunQuery();
     }
-    //fluent experiment  https://scottlilly.com/how-to-create-a-fluent-interface-in-c/
 
-   // var thing = QueryStringInfo.AddSearchWord("word").AddConstraintData(new List<string>() { "A", "A" }).AddMetaData(new List<string>() { "A" }).AddRelationType("A").ConstructQuery().RunQuery();
 }

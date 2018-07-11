@@ -21,14 +21,15 @@ namespace Discobot.Utilities
             //if (inputArr.Length < 3 || random.Next(0, 100)>5) return; //need at least 3 words for haiku, give 1/20 chance of trying
             List<List<WordInfo>> smArr = new List<List<WordInfo>>();
 
-
             int maxSyls = 0;
             foreach (string word in inputArr)
             {
 
-                string endpoint = BaseApiEndpoint + "ml=" + word + "&md=s";
-                var json = new WebClient().DownloadString(endpoint);
-                List<WordInfo> sm = JsonConvert.DeserializeObject<List<WordInfo>>(json);
+                List<WordInfo> sm = QueryStringBuilder.AddSearchWord(word)
+                                  .AddConstraint(DataMuseQsArgs.ConstraintArgments.MeansLike)
+                                  .AddMetaTag(DataMuseQsArgs.MetaDataTags.Syllables)
+                                  .ConstructQuery()
+                                  .RunQuery();
                 if (sm.Count > 0)
                 {
                     List<WordInfo> scoreSortedsmArr = sm.OrderByDescending(o => o.numSyllables)
@@ -139,46 +140,73 @@ namespace Discobot.Utilities
             return pickedWords;
         }
 
-        //goign to be removed for the fluent api
-        public static List<WordInfo> getSentanceWordInfo(List<string> input)
-        {
-            List<WordInfo> WordInfo = new List<WordInfo>();
 
-            foreach (string word in input)
+        // Limrick
+        // 7-10
+        // 7-10
+        // 7-10
+        // 5-7
+        // 5-7
+        // 7-10
+        public static string BuildLimrick(List<string> words)
+        {
+            List<WordInfo> wordsInfo = (from word in words
+                                        select QueryStringBuilder.AddSearchWord(word)
+                                                      .AddConstraint(DataMuseQsArgs.ConstraintArgments.Self)
+                                                      .AddMetaTag(DataMuseQsArgs.MetaDataTags.Syllables)
+                                                      .AddMetaTag(DataMuseQsArgs.MetaDataTags.PartsOfSpeach)
+                                                      .ConstructQuery()
+                                                      .RunQuery()[0]).ToList();
+            int totalSyls = Math.Max(Math.Min(10, wordsInfo.Sum(w => w.numSyllables)), 7); //makes sure its between 7-10 syls
+            //yoink this kind of thing out
+            //looking for nouns
+            List<WordInfo> nextLineInspirations = wordsInfo.Where(w => w.tags.Contains("n")).ToList();
+            //otherwise just get the word with the most sylables
+            if (nextLineInspirations.Count() < 1)
             {
-                string WordInfoQS = BaseApiEndpoint + "sp=" + word + "&md=ps&qe=sp&max=1";
-
-                var WordInfoJson = new WebClient().DownloadString(WordInfoQS);
-
-                WordInfo.AddRange(JsonConvert.DeserializeObject<List<WordInfo>>(WordInfoJson));
+                nextLineInspirations.Add(wordsInfo.OrderByDescending(w => w.numSyllables).First());
             }
-            ;
-            return WordInfo;
+
+            //maybe build them backwards from the rymes?
+            string ARyme = words[words.Count() - 1];
+            List<WordInfo> ARymes = QueryStringBuilder.AddSearchWord(ARyme)
+                                        .AddRelationType(DataMuseQsArgs.Relations.Rymes)
+                                        .AddMetaTag(DataMuseQsArgs.MetaDataTags.Syllables)
+                                        .AddMetaTag(DataMuseQsArgs.MetaDataTags.PartsOfSpeach)
+                                        .ConstructQuery()
+                                        .RunQuery()
+                                        .ToList();
+            if(ARymes.Count() == 0)
+            {
+                throw ("I DIDNT PLAN FOR THIS");
+            }
+            Random rand = new Random();
+            WordInfo lineEnd = ARymes[rand.Next(0, ARymes.Count())];
+            WordInfo currentWord = lineEnd;
+            int sylsLeftForLine = totalSyls;
+            string limrickLine = "";
+            while (sylsLeftForLine > 0)
+            {
+                limrickLine = currentWord.word + " " + limrickLine;
+                sylsLeftForLine -= currentWord.numSyllables;
+                currentWord = GetWordToLeft(currentWord);
+            }
+
+
+            return "A";
         }
 
-        public static List<WordInfo> getRymingWord(string word)
+        public static WordInfo GetWordToLeft(WordInfo word)
         {
-            string rymeInfoQS = BaseApiEndpoint + "rel_rhy=" + word + "&md=ps";
-            var rymeInfoJson = new WebClient().DownloadString(rymeInfoQS);
-            var rymInfo =  JsonConvert.DeserializeObject<List<WordInfo>>(rymeInfoJson);
-            return rymInfo;
+            WordInfo leftWord = QueryStringBuilder.AddSearchWord(word.word)
+                                    .AddRelationType(DataMuseQsArgs.Relations.Predecessors)
+                                    .AddMetaTag(DataMuseQsArgs.MetaDataTags.Syllables)
+                                    .AddMetaTag(DataMuseQsArgs.MetaDataTags.PartsOfSpeach)
+                                    .ConstructQuery()
+                                    .RunQuery().ToList()[0];
+            return leftWord;
         }
-
-        public static List<WordInfo> getWordMeansLike(string word)
-        {
-            string endpoint = BaseApiEndpoint + "ml=" + word + "&md=s";
-            var WordInfoJson = new WebClient().DownloadString(endpoint);
-            return JsonConvert.DeserializeObject<List<WordInfo>>(WordInfoJson);
-        }
-
-        public static List<WordInfo> getNextWord(string word)
-        {
-            string endpoint = BaseApiEndpoint + "ls=" + word;
-            var WordInfoJson = new WebClient().DownloadString(endpoint);
-            return JsonConvert.DeserializeObject<List<WordInfo>>(WordInfoJson);
-        }
-
-
-
     }
+
+
 }
