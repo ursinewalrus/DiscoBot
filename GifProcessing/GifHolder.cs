@@ -47,13 +47,14 @@ namespace GifHolder
         public int FDuration { get; set; }
         public Image FImage { get; set; }
         public string FImagePath { get; set; }
-
+        public int Frame { get; set; }
         //make images and save paths here for it
         public GifFrame(int dur, Image image, string name, string newPath, int frame)
         {
-            FDuration = dur;
-            FImage = image;
-            FImagePath = newPath + name + "_"+ frame + ".png";
+            this.FDuration = dur;
+            this.FImage = image;
+            this.Frame = frame;
+            this.FImagePath = newPath + name + "_"+ frame + ".png";
             FImage.Save(FImagePath, ImageFormat.Png);
             ;
         }

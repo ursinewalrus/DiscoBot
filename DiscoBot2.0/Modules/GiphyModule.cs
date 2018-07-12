@@ -11,6 +11,7 @@ using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Discobot.Utilities;
+using System.Diagnostics;
 
 namespace Discobot.Modules
 {
@@ -37,10 +38,8 @@ namespace Discobot.Modules
             }
             catch (Exception e)
             {
-                ;
                 Console.WriteLine(e);
             }
-                ;
             await ReplyAsync(url);
         }
     }

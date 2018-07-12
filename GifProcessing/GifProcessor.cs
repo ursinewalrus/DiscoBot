@@ -13,6 +13,7 @@ using System.Drawing;
 using ImageMagick;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 //http://alereimondo.no-ip.org/OpenCV/34 - more cascades
 namespace GifProcessing
 {
@@ -68,15 +69,22 @@ namespace GifProcessing
 
         private string subInReplaceFace(Image<Bgra, Byte> replaceFace, string oldGif)
         {
-            
+            Stopwatch stopWatch1 = new Stopwatch();
+            stopWatch1.Start();
             Gif gif = new Gif(OldGifPath, NewGifPath, oldGif);
+            stopWatch1.Stop();
+            long ts1 = stopWatch1.ElapsedMilliseconds;
+            ;
 
             int currentFrame = 0;
+            //could make this a custom object to not have two collections but effect would be the same
             MagickImageCollection collection = new MagickImageCollection();
 
-            //foreach (CascadeClassifier classifier in Classifiers)
-            //{
-            foreach (GifFrame frame in gif.Frames)
+
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            Parallel.ForEach(gif.Frames, frame =>
+            //foreach (GifFrame frame in gif.Frames)
             {
                 Image<Bgra, Byte> originalImage = new Image<Bgra, Byte>(frame.FImagePath);
                 Image<Gray, byte> grayframeOriginal = originalImage.Convert<Gray, byte>();
@@ -113,13 +121,20 @@ namespace GifProcessing
                 collection.Add(NewGifPath + "edited_giphy_" + oldGif + frame.GetHashCode() + ".png");
                 File.Delete(NewGifPath + "edited_giphy_" + oldGif + frame.GetHashCode() + ".png");
                 collection[currentFrame].AnimationDelay = frame.FDuration;
+                collection[currentFrame].Comment = frame.Frame.ToString();
 
                 currentFrame++;
-            }
-            //}
+            });
+            ;
+            //casting wrong
+            MagickImageCollection sortedCollection = new MagickImageCollection(collection.OrderBy(f => Int32.Parse(f.Comment)));
+            stopWatch.Stop();
+            long ts = stopWatch.ElapsedMilliseconds;
+            ;
             string newGifPath = NewGifPath + "giphy_swapped_" + oldGif;
-            collection.Write(newGifPath);
+            sortedCollection.Write(newGifPath);
             collection.Dispose();
+            sortedCollection.Dispose();
             return newGifPath;
         }
 

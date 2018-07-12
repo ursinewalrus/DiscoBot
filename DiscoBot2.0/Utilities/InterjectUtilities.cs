@@ -178,7 +178,7 @@ namespace Discobot.Utilities
                                         .ToList();
             if(ARymes.Count() == 0)
             {
-                throw ("I DIDNT PLAN FOR THIS");
+                //
             }
             Random rand = new Random();
             WordInfo lineEnd = ARymes[rand.Next(0, ARymes.Count())];
