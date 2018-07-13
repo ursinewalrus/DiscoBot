@@ -83,14 +83,50 @@ namespace Discobot.Modules
                 modChar = Regex.Unescape((modChar + diaCrits)).Normalize();
                 scrustyString += modChar;
             }
-            //string s = "a";
-            //s += "\u0301";
-            //s = s.Normalize();
-            ;
             await ReplyAsync(scrustyString);
         }
 
+        [RequireBotPermission(GuildPermission.ManageMessages)]
+        [Command("muddlespeak")]
+        public async Task Muddle([Remainder] string input)
+        {
+            await ModuleUtilities.DeleteMessage(Context);
 
+            List<string> words = input.Split(' ').ToList();
+
+            string muddledSentance = "";
+            //golf it because
+            //having it in the select like that, must do some sort of caching, same result for same input in string every time, desirable?
+            muddledSentance += String.Join(String.Empty, words.Select(w => { return Scramble(w) + " "; } ));
+            await ReplyAsync(muddledSentance);
+
+        }
+
+
+        //   for i from n−1 downto 1 do
+        //j ← random integer such that 0 ≤ j ≤ i
+        //exchange a[j] and a[i]
+        //12435 
+        public static string Scramble(string word)
+        {
+            if(word.Length < 4)
+            {
+                return word;
+            }
+            else
+            {
+                Random rand = new Random();
+                List<char> letters = word.ToCharArray().ToList();
+                for (int i = letters.Count() - 2; i>=1; i--)
+                {
+                    int j = rand.Next(1, i);
+                    char temp = letters[i];
+                    letters[i] = letters[j];
+                    letters[j] = temp;
+                }
+                return String.Join(String.Empty, letters);
+            };
+        }
 
         //public async Task DeleteMessage(IMessage message)
         //{

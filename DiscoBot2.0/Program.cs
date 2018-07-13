@@ -106,13 +106,22 @@ namespace Discobot
             }
             #endregion
 
-            #region intercept_scrustspeak
+            #region intercept_text
             if (overRideDefaultAllowances(message) && !message.HasCharPrefix('!', ref argPos))
             {
                 PropertyInfo propInfo = typeof(SocketUserMessage).GetProperty("Content");
                 FieldInfo contentField = propInfo.GetBackingField();
                 argPos++;
-                contentField.SetValue(message, "!scrustspeak 4 " + message.Content);
+                Random rand = new Random();
+                int pick = rand.Next(0, 2);
+                if(pick == 0)
+                {
+                    contentField.SetValue(message, "!scrustspeak 4 " + message.Content);
+                }
+                else
+                {
+                    contentField.SetValue(message, "!muddlespeak " + message.Content);
+                }
             }
             #endregion
 

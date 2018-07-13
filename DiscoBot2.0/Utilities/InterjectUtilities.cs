@@ -206,6 +206,14 @@ namespace Discobot.Utilities
                                     .RunQuery().ToList()[0];
             return leftWord;
         }
+
+        public static WordInfo ExtractByPoS(List<WordInfo> words, string pos)
+        {
+            Random rand = new Random();
+            var nouns = words.Where(w => w.tags.Contains(pos)).ToList();
+            int choice = rand.Next(0, nouns.Count());
+            return nouns[choice];
+        }
     }
 
 
