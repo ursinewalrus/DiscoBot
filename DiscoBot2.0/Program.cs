@@ -132,6 +132,7 @@ namespace Discobot
 
             if (!result.IsSuccess)
             {
+                ;
                 await context.Channel.SendMessageAsync(result.ErrorReason);
             }
 

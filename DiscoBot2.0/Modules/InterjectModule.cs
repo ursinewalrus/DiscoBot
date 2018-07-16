@@ -37,6 +37,7 @@ namespace Discobot.Modules
         {
             List<string> words = input.Split(' ').ToList();
             var limrick = InterjectUtilities.BuildLimrick(words);
+            await ReplyAsync(limrick);
 
         }
     }

@@ -176,35 +176,93 @@ namespace Discobot.Utilities
                                         .ConstructQuery()
                                         .RunQuery()
                                         .ToList();
-            if(ARymes.Count() == 0)
+            if (ARymes.Count() == 0)
             {
-                //
+                ARymes.AddRange(
+
+                    QueryStringBuilder.AddSearchWord(ARyme)
+                                        .AddConstraint(DataMuseQsArgs.ConstraintArgments.MeansLike)
+                                        .AddMetaTag(DataMuseQsArgs.MetaDataTags.Syllables)
+                                        .AddMetaTag(DataMuseQsArgs.MetaDataTags.PartsOfSpeach)
+                                        .ConstructQuery()
+                                        .RunQuery()
+                                        .ToList()
+                    );
             }
+            
+            //A rymes
+            List<List<WordInfo>> ALines = new List<List<WordInfo>>();
+            for (var i = 0; i < 3; i++)
+            {
+                ALines.Add(BuildLimrickline(totalSyls, ARymes));
+            }
+            //B rymes
+            //seed for B rymes
+            List<WordInfo> BLineSeed = GetAssocWordByPos(ALines[1].Last());
+            List<List<WordInfo>> BLines = new List<List<WordInfo>>();
+            for (var i = 0; i<2; i++)
+            {
+                BLines.Add(BuildLimrickline(totalSyls-3, BLineSeed));
+            }
+            string completedLimrick = "";
+            completedLimrick += String.Join(" ", ALines[0].Select(s => s.word).ToList()) + "\n";
+            completedLimrick += String.Join(" ", ALines[1].Select(s => s.word).ToList()) + "\n";
+            completedLimrick += String.Join(" ", BLines[0].Select(s => s.word).ToList()) + "\n";
+            completedLimrick += String.Join(" ", BLines[1].Select(s => s.word).ToList()) + "\n";
+            completedLimrick += String.Join(" ", ALines[2].Select(s => s.word).ToList()) + "\n";
+            return completedLimrick;
+
+        }
+
+        private static List<WordInfo> BuildLimrickline(int totalSyls, List<WordInfo> Rymes)
+        {
             Random rand = new Random();
-            WordInfo lineEnd = ARymes[rand.Next(0, ARymes.Count())];
+            WordInfo lineEnd = Rymes[rand.Next(0, Rymes.Count())];
             WordInfo currentWord = lineEnd;
             int sylsLeftForLine = totalSyls;
-            string limrickLine = "";
+            List<WordInfo> limrickLine = new List<WordInfo>() ;
             while (sylsLeftForLine > 0)
             {
-                limrickLine = currentWord.word + " " + limrickLine;
+                limrickLine.Insert(0, currentWord);
                 sylsLeftForLine -= currentWord.numSyllables;
                 currentWord = GetWordToLeft(currentWord);
             }
-
-
-            return "A";
+            return limrickLine;
         }
 
         public static WordInfo GetWordToLeft(WordInfo word)
         {
-            WordInfo leftWord = QueryStringBuilder.AddSearchWord(word.word)
+            //try catch mebe
+            List<WordInfo> leftWords = QueryStringBuilder.AddSearchWord(word.word)
                                     .AddRelationType(DataMuseQsArgs.Relations.Predecessors)
                                     .AddMetaTag(DataMuseQsArgs.MetaDataTags.Syllables)
                                     .AddMetaTag(DataMuseQsArgs.MetaDataTags.PartsOfSpeach)
                                     .ConstructQuery()
-                                    .RunQuery().ToList()[0];
-            return leftWord;
+                                    .RunQuery();
+            if(leftWords.Count() < 1)
+            {
+                leftWords.AddRange(
+
+                     QueryStringBuilder.AddSearchWord(word.word)
+                                    .AddConstraint(DataMuseQsArgs.ConstraintArgments.MeansLike)
+                                    .AddMetaTag(DataMuseQsArgs.MetaDataTags.Syllables)
+                                    .AddMetaTag(DataMuseQsArgs.MetaDataTags.PartsOfSpeach)
+                                    .ConstructQuery()
+                                    .RunQuery()
+
+                    );
+            }
+            if(leftWords.Count() == 0)
+            {
+                leftWords.Add(word);
+            }
+            
+            return GetLongestWord(leftWords.ToList());
+        }
+
+        public static WordInfo GetLongestWord(List<WordInfo> words)
+        {
+            return words.OrderByDescending(w => w.numSyllables).ToList().First();
         }
 
         public static WordInfo ExtractByPoS(List<WordInfo> words, string pos)
@@ -213,6 +271,36 @@ namespace Discobot.Utilities
             var nouns = words.Where(w => w.tags.Contains(pos)).ToList();
             int choice = rand.Next(0, nouns.Count());
             return nouns[choice];
+        }
+
+        public static List<WordInfo> GetAssocWordByPos(WordInfo word)
+        {
+            string posToSearch = "";
+            posToSearch = (word.tags.Contains("n")) ? DataMuseQsArgs.Relations.AdjModByNoun :
+
+                          (word.tags.Contains("adv")) ? DataMuseQsArgs.Relations.NounsModByAdj : DataMuseQsArgs.Relations.Anyonyms;
+
+
+            List<WordInfo> assocWords = QueryStringBuilder.AddSearchWord(word.word)
+                                    .AddRelationType(posToSearch)
+                                    .AddMetaTag(DataMuseQsArgs.MetaDataTags.Syllables)
+                                    .AddMetaTag(DataMuseQsArgs.MetaDataTags.PartsOfSpeach)
+                                    .ConstructQuery()
+                                    .RunQuery();
+            if(assocWords.Count() < 1)
+            {
+                assocWords.AddRange(
+
+                    QueryStringBuilder.AddSearchWord(word.word)
+                                    .AddConstraint(DataMuseQsArgs.ConstraintArgments.MeansLike)
+                                    .AddMetaTag(DataMuseQsArgs.MetaDataTags.Syllables)
+                                    .AddMetaTag(DataMuseQsArgs.MetaDataTags.PartsOfSpeach)
+                                    .ConstructQuery()
+                                    .RunQuery()
+
+                    );
+            }
+            return assocWords;
         }
     }
 

@@ -39,13 +39,14 @@ namespace Discobot.Objects
             public static string Rymes = "rhy";
             public static string Homophones = "hom";
         }
-    }
-    public enum PoS
-    {
-        v = 0,//verb
-        n = 1,//noun
-        adj = 2,//adjetive
-        adv = 3,//adverb
-        u = 4//undefined
+        public enum PoS
+        {
+            v = 0,//verb
+            n = 1,//noun
+            adj = 2,//adjetive
+            adv = 3,//adverb
+            u = 4//undefined
+        }
+
     }
 }
