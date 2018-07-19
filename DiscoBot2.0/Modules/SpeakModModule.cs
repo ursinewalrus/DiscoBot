@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using Discobot.Utilities;
 using System.Text.RegularExpressions;
+using Discobot.Objects;
 
 namespace Discobot.Modules
 {
@@ -102,7 +103,6 @@ namespace Discobot.Modules
 
         }
 
-
         //   for i from n−1 downto 1 do
         //j ← random integer such that 0 ≤ j ≤ i
         //exchange a[j] and a[i]
@@ -128,18 +128,34 @@ namespace Discobot.Modules
             };
         }
 
-        //public async Task DeleteMessage(IMessage message)
-        //{
-        //    IMessage[] msg = { message };
-        //    await Context.Channel.DeleteMessagesAsync(msg);
-        //}
+        //https://text-symbols.com/upside-down/
+        [Command("flipspeak")]
+        public async Task Flip([Remainder] string input)
+        {
+            await ModuleUtilities.DeleteMessage(Context);
 
-        //public string TrimCommand(IMessage message)
-        //{
-        //    List<string> oldMsgArr = Context.Message.ToString().Split(' ').ToList();
-        //    return String.Join(" ", oldMsgArr.GetRange(1, oldMsgArr.Count - 1));
-        //}
-
+            string flippedString = "";
+            foreach(char letter in input)
+            {
+                if (Char.IsLetter(letter))
+                {
+                    if (Char.IsUpper(letter))
+                    {
+                        flippedString = Regex.Unescape(SpeakModObjects.flipDicCaps[letter.ToString()]).Normalize() + flippedString;
+                    }
+                    else
+                    {
+                        flippedString = Regex.Unescape(SpeakModObjects.flipDicLower[letter.ToString()]).Normalize() + flippedString;
+                    }
+                }
+                else
+                {
+                    flippedString = letter + flippedString;
+                }
+            }
+            
+            await ReplyAsync(flippedString);
+        }
 
     }
 }

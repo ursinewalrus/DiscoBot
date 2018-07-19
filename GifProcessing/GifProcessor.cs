@@ -83,7 +83,7 @@ namespace GifProcessing
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
-            Parallel.ForEach(gif.Frames, frame =>
+            foreach(var frame in gif.Frames)
             //foreach (GifFrame frame in gif.Frames)
             {
                 Image<Bgra, Byte> originalImage = new Image<Bgra, Byte>(frame.FImagePath);
@@ -124,7 +124,7 @@ namespace GifProcessing
                 collection[currentFrame].Comment = frame.Frame.ToString();
 
                 currentFrame++;
-            });
+            };
             ;
             //casting wrong
             MagickImageCollection sortedCollection = new MagickImageCollection(collection.OrderBy(f => Int32.Parse(f.Comment)));

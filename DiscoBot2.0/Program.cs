@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using Discobot.Modules;
 using Mono.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 //https://discord.foxbot.me/docs/guides/commands/commands.html
 //https://github.com/Aux/Discord.Net-Example
@@ -75,26 +76,30 @@ namespace Discobot
 
             Tuple< ModuleUtilities.ImageLocations,string> imageWhere = CheckForImage(message);
 
-            if(imageWhere.Item1 != ModuleUtilities.ImageLocations.None)
+            if (imageWhere.Item1 != ModuleUtilities.ImageLocations.None)
             {
-                var typingOnReplaceImage = context.Channel.EnterTypingState();
-                var gif = GifUtilities.DoFaceReplace(imageWhere.Item2);
-                //lets do some dubious reflection
-                //PropertyInfo propInfo = typeof(SocketUserMessage).GetProperty("Attachments");
-                //FieldInfo contentField = propInfo.GetBackingField();
-                //contentField.SetValue(message, gif);
-                if (imageWhere.Item1 == ModuleUtilities.ImageLocations.Message)
+                new Thread(async () =>
                 {
-                    await context.Channel.SendMessageAsync(gif);
-                }
-                else
-                {
-                    await context.Channel.SendFileAsync(gif);
-                }
-                typingOnReplaceImage.Dispose();
-                return;
-               ;
-                //typingOnReplaceImage.Dispose();
+                    var typingOnReplaceImage = context.Channel.EnterTypingState();
+                    var gif = GifUtilities.DoFaceReplace(imageWhere.Item2);
+                    //lets do some dubious reflection
+                    //PropertyInfo propInfo = typeof(SocketUserMessage).GetProperty("Attachments");
+                    //FieldInfo contentField = propInfo.GetBackingField();
+                    //contentField.SetValue(message, gif);
+                    if (imageWhere.Item1 == ModuleUtilities.ImageLocations.Message)
+                    {
+                        await context.Channel.SendMessageAsync(gif);
+                    }
+                    else
+                    {
+                        await context.Channel.SendFileAsync(gif);
+                    }
+                    typingOnReplaceImage.Dispose();
+                    return;
+                    ;
+                    //typingOnReplaceImage.Dispose();
+
+                }).Start();
             }
 
             #region wrong_channel
@@ -127,14 +132,18 @@ namespace Discobot
 
 
             var typing = context.Channel.EnterTypingState();
-            var result = await commands.ExecuteAsync(context, argPos, services);
-            typing.Dispose();
-
-            if (!result.IsSuccess)
+            new Thread(async () =>
             {
-                ;
-                await context.Channel.SendMessageAsync(result.ErrorReason);
-            }
+                var result = await commands.ExecuteAsync(context, argPos, services);
+                typing.Dispose();
+                if (!result.IsSuccess)
+                {
+                    await context.Channel.SendMessageAsync(result.ErrorReason);
+                }
+                typing.Dispose();
+
+            }).Start();
+            typing.Dispose();
 
         }
 
