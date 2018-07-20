@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Discord;
 using Discord.Commands;
 using System.Threading.Tasks;
-using System.Linq;
 using Discobot.Utilities;
 using System.Configuration;
 using System.Net;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Discobot.Utilities;
-using System.Diagnostics;
 
 namespace Discobot.Modules
 {

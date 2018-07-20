@@ -1,10 +1,7 @@
-﻿using Discord;
-using Discord.Commands;
+﻿using Discord.Commands;
 using System.Threading.Tasks;
 using Discobot.Utilities;
 using System.Collections.Generic;
-using Newtonsoft;
-using Newtonsoft.Json.Linq;
 
 //https://github.com/overtools/OWLeagueLib
 //https://api.overwatchleague.com

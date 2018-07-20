@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using System.Threading.Tasks;
-using Discobot.Utilities;
 using System.Diagnostics;
 using Discord.Audio;
 using System.Reflection;

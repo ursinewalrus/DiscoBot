@@ -14,11 +14,8 @@ using Discobot.Modules;
 using Mono.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
-
-//https://discord.foxbot.me/docs/guides/commands/commands.html
-//https://github.com/Aux/Discord.Net-Example
-//https://media.readthedocs.org/pdf/discordnet-foxbot-docs/legacy/discordnet-foxbot-docs.pdf
-//https://github.com/RogueException/Discord.Net
+//https://stackexchange.github.io/StackExchange.Redis/Basics
+//https://github.com/Yortw/tweetmoasharp
 namespace Discobot
 {
     class Program

@@ -2,16 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using GifHolder;
 using Emgu.CV;
 using Emgu.CV.Structure;
-using Emgu.Util;
 using Emgu.CV.CvEnum;
 using System.Drawing;
 using ImageMagick;
-using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 //http://alereimondo.no-ip.org/OpenCV/34 - more cascades

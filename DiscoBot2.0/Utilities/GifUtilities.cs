@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-using System;
-using Discord.Commands;
+﻿using System;
 
 namespace Discobot.Utilities
 {
