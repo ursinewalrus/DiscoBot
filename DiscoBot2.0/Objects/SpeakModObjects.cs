@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +10,7 @@ namespace Discobot.Objects
     {
         public static Dictionary<String, String> flipDicCaps = new Dictionary<string, string>()
         {
-            {"A",  @"\u0220" },
+            {"A",  @"\u2200" },
             {"B",  @"\u10412" },
             {"C",  @"\u2183" },
             {"D",  @"\u25d6" },
@@ -28,6 +28,7 @@ namespace Discobot.Objects
             {"P",  @"\u0500" },
             {"Q",  @"\u038c" },
             {"R",  @"\u1d1a" },
+            {"S",  @"S" },
             {"T",  @"\u0220" },
             {"U",  @"\u2229" },
             {"V",  @"\u1d27" },
@@ -41,7 +42,7 @@ namespace Discobot.Objects
             {"a",  @"\u0250" },
             {"b",  @"\u0071" },
             {"c",  @"\u0254" },
-            {"d",  @"\u0070" },
+            {"d",  @"p" },
             {"e",  @"\u01dd" },
             {"f",  @"\u025f" },
             {"g",  @"\u0183" },
@@ -53,7 +54,7 @@ namespace Discobot.Objects
             {"m",  @"\u026f" },
             {"n",  @"\u0075" },
             {"o",  @"o" },
-            {"p",  @"p" },
+            {"p",  @"d" },
             {"q",  @"b" },
             {"r",  @"\u0279" },
             {"s",  @"s" },
