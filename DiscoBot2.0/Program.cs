@@ -78,7 +78,7 @@ namespace Discobot
                 new Thread(async () =>
                 {
                     var typingOnReplaceImage = context.Channel.EnterTypingState();
-                    var gif = GifUtilities.DoFaceReplace(imageWhere.Item2);
+                    var gif = GifUtilities.DoFaceReplace(imageWhere.Item2, "lampreyme.png");
                     //lets do some dubious reflection
                     //PropertyInfo propInfo = typeof(SocketUserMessage).GetProperty("Attachments");
                     //FieldInfo contentField = propInfo.GetBackingField();

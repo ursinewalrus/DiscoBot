@@ -27,10 +27,10 @@ namespace GifProcessing
         static void Main(string[] args)
         {
             //loop for FEATURES????
-            GifProcessing processor = new GifProcessing("ImageProcessing");
+            //GifProcessing processor = new GifProcessing("ImageProcessing");
 
-            var thing = processor.GifFaceSwap("me.jpg", "giphy.gif");
-            ;
+            //  var thing = processor.GifFaceSwap("me.jpg", "giphy.gif");
+            //  ;
             // string download = processor.DownloadGif("https://media3.giphy.com/media/ypqHf6pQ5kQEg/giphy.gif");
 
 
