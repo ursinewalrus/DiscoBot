@@ -18,13 +18,16 @@ namespace Discobot.Modules
 
         //drop in a command to do the try catch or not
         [Command("jiffy")]
-        public async Task GiphyGet(string face, [Remainder] string input = "")
+        public async Task GiphyGet([Remainder] string input = "")
         {
-            if(face.Split(':').Length != 2 && face.Split(':')[0] != "Face")
-            {
-                input = face += input;
-                face = "lampreyme.png";
+            var faceArgs = input.Split(' ');
+            var face = GifUtilities.DefaultFace;
+
+            if (faceArgs[0].Contains("Face:") && faceArgs[0].Split(':').Length == 2){
+                face = faceArgs[0].Split(':')[1];
+                input = String.Join(" ", faceArgs.Skip(1));
             }
+
             string searchString = "http://api.giphy.com/v1/gifs/translate?api_key=" + GiphyKey + "&s=" + Uri.EscapeDataString(input);
             var json = new WebClient().DownloadString(searchString);
             JToken giffyToken = JObject.Parse(json);

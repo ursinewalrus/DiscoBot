@@ -73,7 +73,7 @@ namespace Discobot
 
             Tuple< ModuleUtilities.ImageLocations,string> imageWhere = CheckForImage(message);
 
-            if (imageWhere.Item1 != ModuleUtilities.ImageLocations.None)
+            if (imageWhere.Item1 != ModuleUtilities.ImageLocations.None && false) //disable this for the time being it doesn't totally work and presents issues of its own
             {
                 new Thread(async () =>
                 {
