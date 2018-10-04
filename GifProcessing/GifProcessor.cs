@@ -164,16 +164,18 @@ namespace GifProcessing
         private Image<Bgra, byte> CropReplaceFaces(string newFacePath)
         {
             Image<Bgra, Byte> replaceFaceImg = new Image<Bgra, Byte>(FacesPath + newFacePath);
-            Image<Gray, byte> replaceFaceGreyscale = replaceFaceImg.Convert<Gray, byte>();
-            var greyCoordinates = Classifiers[3].DetectMultiScale(replaceFaceGreyscale, 1.01, 10, Size.Empty); //should only be one per
-            if (greyCoordinates.Count() > 0)
-            {
-                Rectangle roi = new Rectangle(greyCoordinates[0].X, greyCoordinates[0].Y, greyCoordinates[0].Width, greyCoordinates[0].Height);
-                replaceFaceImg.ROI = roi;
-                var replaceFace = replaceFaceImg.Copy();
-                return replaceFace;
-            }
-                return replaceFaceImg; 
+            //works but due to use case not nesessary atm, user uploaded faces can be assumed to be fine
+            //given the current integration
+            //Image<Gray, byte> replaceFaceGreyscale = replaceFaceImg.Convert<Gray, byte>();
+            //var greyCoordinates = Classifiers[3].DetectMultiScale(replaceFaceGreyscale, 1.01, 10, Size.Empty); //should only be one per
+            //if (greyCoordinates.Count() > 0)
+            //{
+            //    Rectangle roi = new Rectangle(greyCoordinates[0].X, greyCoordinates[0].Y, greyCoordinates[0].Width, greyCoordinates[0].Height);
+            //    replaceFaceImg.ROI = roi;
+            //    var replaceFace = replaceFaceImg.Copy();
+            //    return replaceFace;
+            //}
+            return replaceFaceImg; 
         }
 
         public string DownloadGif(string url)
