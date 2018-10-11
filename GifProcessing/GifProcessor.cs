@@ -66,73 +66,91 @@ namespace GifProcessing
 
         private string subInReplaceFace(Image<Bgra, Byte> replaceFace, string oldGif)
         {
-            Stopwatch stopWatch1 = new Stopwatch();
-            stopWatch1.Start();
+           // Stopwatch stopWatch1 = new Stopwatch();
+            //stopWatch1.Start();
             Gif gif = new Gif(OldGifPath, NewGifPath, oldGif);
-            stopWatch1.Stop();
-            long ts1 = stopWatch1.ElapsedMilliseconds;
+            //stopWatch1.Stop();
+            //long ts1 = stopWatch1.ElapsedMilliseconds;
             ;
 
-            int currentFrame = 0;
             //could make this a custom object to not have two collections but effect would be the same
             MagickImageCollection collection = new MagickImageCollection();
 
+            var markedFaces = FindFaces(gif);
+            FillGaps(markedFaces);
 
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            foreach(var frame in gif.Frames)
-            //foreach (GifFrame frame in gif.Frames)
+            //casting wrong
+            MagickImageCollection sortedCollection = new MagickImageCollection(collection.OrderBy(f => Int32.Parse(f.Comment)));
+            string newGifPath = NewGifPath + "giphy_swapped_" + oldGif;
+            sortedCollection.Write(newGifPath);
+            collection.Dispose();   
+            sortedCollection.Dispose();
+            return newGifPath;
+        }
+
+        private List<List<MarkedFrame>> FindFaces(Gif gif)
+        {
+            List<List<MarkedFrame>> gifMarkedFrames = new List<List<MarkedFrame>>();
+            var frameNum = 0;
+            foreach (var frame in gif.Frames)
             {
                 Image<Bgra, Byte> originalImage = new Image<Bgra, Byte>(frame.FImagePath);
                 Image<Gray, byte> grayframeOriginal = originalImage.Convert<Gray, byte>();
-
-                ConcurrentBag<Tuple<Rectangle,Image<Bgra,Byte>>> faceDims = new ConcurrentBag<Tuple<Rectangle, Image<Bgra, Byte>>>();
-
-                //test for speed at some point vs just a for loop
+                ConcurrentBag<MarkedFrame> faceDims = new ConcurrentBag<MarkedFrame>();
                 Parallel.ForEach(Classifiers, haarFace =>
                 {
-                    var faces = haarFace.DetectMultiScale(grayframeOriginal,1.1,6); //1.01, 10, Size.Empty
+                    var foundFaces = false;
+                    var faces = haarFace.DetectMultiScale(grayframeOriginal, 1.1, 6); //1.01, 10, Size.Empty
+                    if (faces.Count() > 0)
+                        foundFaces = true;
 
                     foreach (var face in faces)
                     {
-                        var resizedReplaceFace = replaceFace.Resize(face.Width, face.Height, Inter.Linear);
-                        Rectangle frameRoi = new Rectangle(face.X, face.Y, face.Width, face.Height);
-                        faceDims.Add(Tuple.Create(frameRoi, resizedReplaceFace));
-                        //originalImage.ROI = frameRoi;
-
-                        //replacePixels(originalImage, resizedReplaceFace);
+                        var replaceAreas = new MarkedFrame();
+                        replaceAreas.FrameNumber = frameNum;
+                        replaceAreas.FrameROI = new Rectangle(face.X, face.Y, face.Width, face.Height);
+                        replaceAreas.ClassifiedBy = haarFace.ToString();
+                        faceDims.Add(replaceAreas);
+                        ;
                     }
-
+                    if (!foundFaces)
+                    {
+                        var placeHolderForNotFound = new MarkedFrame();
+                        placeHolderForNotFound.FrameNumber = frameNum;
+                        placeHolderForNotFound.FrameROI = new Rectangle(0, 0, 0, 0);
+                        placeHolderForNotFound.ClassifiedBy = haarFace.ToString();
+                        faceDims.Add(placeHolderForNotFound);
+                    }
                 });
-                foreach(var faceROI in faceDims)
-                {
-                    originalImage.ROI = faceROI.Item1;
+                List<MarkedFrame> converted = faceDims.ToList();
+                //just ensure always end up in the same order for later processing
+                converted = converted.OrderBy(cb => cb.ClassifiedBy).ToList();
+                gifMarkedFrames.Add(converted);
+                frameNum++;
+            }
+            return gifMarkedFrames;
+        }
 
-                    replacePixels(originalImage, faceROI.Item2);
-                }
-                //Parallel.ForEach(Classifiers, haarFace =>{});
+        private void FillGaps(List<List<MarkedFrame>> markedFrames)
+        {
+            for (var i = 0; i < Classifiers.Count(); i++)
+            {
+                //all faces by same classifier, in order of frame
+                var facesByCatgorized = markedFrames.Select(f => f[i]).OrderBy(f => f.FrameNumber).ToList();
 
-                //CvInvoke.cvCopy(resizedReplaceFace, originalImage, IntPtr.Zero);
-                originalImage.ROI = Rectangle.Empty;
-                originalImage.Save(NewGifPath + "edited_giphy_" + oldGif + frame.GetHashCode() + ".png");
-                collection.Add(NewGifPath + "edited_giphy_" + oldGif + frame.GetHashCode() + ".png");
-                File.Delete(NewGifPath + "edited_giphy_" + oldGif + frame.GetHashCode() + ".png");
-                collection[currentFrame].AnimationDelay = frame.FDuration;
-                collection[currentFrame].Comment = frame.Frame.ToString();
+                var firstFace = facesByCatgorized.Min(f => f.FrameNumber);
+                var lastFace = facesByCatgorized.Max(f => f.FrameNumber);
 
-                currentFrame++;
-            };
-            ;
-            //casting wrong
-            MagickImageCollection sortedCollection = new MagickImageCollection(collection.OrderBy(f => Int32.Parse(f.Comment)));
-            stopWatch.Stop();
-            long ts = stopWatch.ElapsedMilliseconds;
-            ;
-            string newGifPath = NewGifPath + "giphy_swapped_" + oldGif;
-            sortedCollection.Write(newGifPath);
-            collection.Dispose();
-            sortedCollection.Dispose();
-            return newGifPath;
+                if (firstFace == lastFace)
+                    return;
+                //so we know there are gaps now where the classifier found a face, lost it, and picked it up again,
+                //we are going to assume it lost it by accident 
+                //going to calculate faces x+y velocity and use it to place the face on the missing frames
+                float xVel = 0;
+                float yVel = 0;
+                for(var i=facesByCatgorized.)
+
+            }
         }
 
         private static void replacePixels(Image<Bgra, byte> originalImage, Image<Bgra, byte> resizedReplaceFace)

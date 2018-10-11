@@ -23,7 +23,7 @@ namespace Discobot.Modules
             var faceArgs = input.Split(' ');
             var face = GifUtilities.DefaultFace;
 
-            if (faceArgs[0].Contains("Face:") && faceArgs[0].Split(':').Length == 2){
+            if (faceArgs[0].ToLower().Contains("face:") && faceArgs[0].Split(':').Length == 2){
                 face = faceArgs[0].Split(':')[1];
                 input = String.Join(" ", faceArgs.Skip(1));
             }
