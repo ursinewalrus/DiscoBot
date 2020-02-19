@@ -25,19 +25,11 @@ namespace GifProcessing
         public string OldGifPath; 
         public string NewGifPath;
 
+        public int NthFrameToAnalyze;
+
         public List<CascadeClassifier> Classifiers;
 
-        static void Main(string[] args)
-        {
-            //loop for FEATURES????
-            GifProcessing processor = new GifProcessing("ImageProcessing");
-
-           // var thing = processor.GifFaceSwap("me.jpg", "giphy.gif");
-            ;
-            // string download = processor.DownloadGif("https://media3.giphy.com/media/ypqHf6pQ5kQEg/giphy.gif");
-
-
-        }
+        static void Main(string[] args){}
 
         public GifProcessing(string imagesFolder)
         {
@@ -64,13 +56,14 @@ namespace GifProcessing
             string fileName = pathParts[pathParts.Length - 1];
             //...if gif gather the indev images, pass them in, CropReplaceFaces should take List<Image<Bgra, Byte>>
             List<Image<Bgra, Byte>>replaceFace  = new List<Image<Bgra, Byte>>();
-            newFacePaths.ForEach(f => replaceFace.Add(CropReplaceFaces(f)));
+            newFacePaths.ForEach(f => replaceFace.Add(new Image<Bgra, Byte>(FacesPath + f)));
             string newGif = subInReplaceFace(replaceFace, fileName);
             return newGif;
         }
 
         private string subInReplaceFace(List<Image<Bgra, Byte>> replaceFace, string oldGif)
         {
+            #region init_stuff
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
             Gif gif = new Gif(OldGifPath, NewGifPath, oldGif);
@@ -81,49 +74,85 @@ namespace GifProcessing
             ConcurrentBag<int> totalFacesReplaced = new ConcurrentBag<int>();
             ConcurrentBag<int> framesWithFacesReplaced = new ConcurrentBag<int>();
 
-            int currentFrame = 0;
             //could make this a custom object to not have two collections but effect would be the same
             MagickImageCollection collection = new MagickImageCollection();
 
 
             Stopwatch stopWatch1 = new Stopwatch();
             stopWatch1.Start();
-            foreach(var frame in gif.Frames)
+
+            #endregion
+
+            #region speed_optimizer_setup
+            //cordinates of rectangles in frames by index we think should have my face over them
+            //as determined by them being sandwiched between frames with confirmed faces
+            //and rectangles as determined by the average coordinates of the sandwiching frame
+            //rectangles
+            List<Rectangle>[] windowEdgeFrames = new List<Rectangle>[gif.Frames.Count()];
+            #endregion
+
+            #region the_work
+
+            //int currentFrame = 0;
+            //foreach (var frame in gif.Frames)
             //Parallel.ForEach(gif.Frames, frame =>
+            for (var currentFrame = 0; currentFrame < gif.Frames.Count(); currentFrame++)
             {
+
+                if(currentFrame % 2 == 0)
+                {
+                    continue;
+                }
+                var frame = gif.Frames[currentFrame];
+                //skip every other frame, TODO make this an arg cripes
+               
+
                 // Stopwatch frameWatch = new Stopwatch();
                 // frameWatch.Start();
                 Image<Bgra, Byte> originalImage = new Image<Bgra, Byte>(frame.FImagePath);
                 Image<Gray, byte> grayframeOriginal = originalImage.Convert<Gray, byte>();
 
-                ConcurrentBag<Tuple<Rectangle, Image<Bgra, byte>>> faceDims = LocateFaces(replaceFace, totalFacesReplaced, currentFrame, grayframeOriginal);
+                ConcurrentBag<Tuple<Rectangle, Image<Bgra, byte>>> faceDims = LocateFaces(replaceFace, currentFrame, grayframeOriginal);
                 
                 foreach (var faceROI in faceDims)
                 {
+                    if(windowEdgeFrames[currentFrame] == null)
+                    {
+                        windowEdgeFrames[currentFrame] = new List<Rectangle>();
+                    }
+                    windowEdgeFrames[currentFrame].Add(faceROI.Item1);
                     framesWithFacesReplaced.Add(1);
                     originalImage.ROI = faceROI.Item1;
                     replacePixels(originalImage, faceROI.Item2);
                 }
+
+                //we saw a face earlier, now we see one again
+               
                 //Parallel.ForEach(Classifiers, haarFace =>{});
 
                 //CvInvoke.cvCopy(resizedReplaceFace, originalImage, IntPtr.Zero);
                 originalImage.ROI = Rectangle.Empty;
-                originalImage.Save(NewGifPath + "edited_giphy_" + oldGif + frame.GetHashCode() + ".png");
+                //probs just give it another name for if edited or not
+                originalImage.Save(NewGifPath + "edited_giphy_" + currentFrame + "_" + oldGif + frame.GetHashCode() + ".png");
 
 
-                collection.Add(NewGifPath + "edited_giphy_" + oldGif + frame.GetHashCode() + ".png");
-                
+                collection.Add(NewGifPath + "edited_giphy_" + currentFrame + "_" + oldGif + frame.GetHashCode() + ".png");
+
                 // File.Delete(NewGifPath + "edited_giphy_" + oldGif + frame.GetHashCode() + ".png");
-                collection[currentFrame].AnimationDelay = frame.FDuration;
-                collection[currentFrame].Comment = frame.Frame.ToString();
+
+                collection.Last().AnimationDelay = frame.FDuration;
+                collection.Last().Comment = frame.Frame.ToString();
 
                 // frameWatch.Stop();
                 //  long frameTime = frameWatch.ElapsedMilliseconds;
 
                 //Console.WriteLine("frame "+ currentFrame.ToString()+" took:" + frameTime.ToString() + " ms to process");
-                currentFrame++;
+                //currentFrame++;
 
             };
+            #endregion
+
+            #region writing_&_analytics
             Console.WriteLine(framesWithFacesReplaced.Count().ToString() + " with faces replaced");
             Console.WriteLine(totalFacesReplaced.Count().ToString() + " total facecs replaced");
             ;
@@ -132,7 +161,7 @@ namespace GifProcessing
             stopWatch1.Stop();
             long ts1 = stopWatch1.ElapsedMilliseconds;
 
-            Console.WriteLine("face subbing took:" + ts1.ToString() + " ms for " + currentFrame.ToString() + " frames");
+            Console.WriteLine("face subbing took:" + ts1.ToString() + " ms for " + gif.Frames.Count().ToString() + " frames");
 
             Stopwatch stopWatch2 = new Stopwatch();
             stopWatch2.Start();
@@ -152,22 +181,25 @@ namespace GifProcessing
             stopWatch2.Stop();
             long ts2 = stopWatch2.ElapsedMilliseconds;
             Console.WriteLine("The rest took:" + ts2.ToString() + " ms");
+            #endregion
+            var a = windowEdgeFrames;
+            var l = windowEdgeFrames.Length;
             return newGifPath;
         }
 
-        private ConcurrentBag<Tuple<Rectangle, Image<Bgra, byte>>> LocateFaces(List<Image<Bgra, byte>> replaceFace, ConcurrentBag<int> totalFacesReplaced, int currentFrame, Image<Gray, byte> grayframeOriginal)
+        private ConcurrentBag<Tuple<Rectangle, Image<Bgra, byte>>> LocateFaces(List<Image<Bgra, byte>> replaceFace, int currentFrame, Image<Gray, byte> grayframeOriginal)
         {
             ConcurrentBag<Tuple<Rectangle, Image<Bgra, Byte>>> faceDims = new ConcurrentBag<Tuple<Rectangle, Image<Bgra, Byte>>>();
 
             //test for speed at some point vs just a for loop
             Parallel.ForEach(Classifiers, haarFace =>
             {
-
+                //set ROI on past ones to speed up
+                //grayframeOriginal.ROI = new Rectangle(0, 0, 10, 10);
                 var faces = haarFace.DetectMultiScale(grayframeOriginal, 1.1, 6); //1.01, 10, Size.Empty
 
                 foreach (var face in faces)
                 {
-                    totalFacesReplaced.Add(1);
                     var resizedReplaceFace = replaceFace[(currentFrame % (2 * replaceFace.Count())) / 2].Resize(face.Width, face.Height, Inter.Linear);
                     Rectangle frameRoi = new Rectangle(face.X, face.Y, face.Width, face.Height);
                     faceDims.Add(Tuple.Create(frameRoi, resizedReplaceFace));
@@ -224,22 +256,6 @@ namespace GifProcessing
 
 
 
-        }
-
-        private Image<Bgra, byte> CropReplaceFaces(string newFacePath)
-        {
-            Image<Bgra, Byte> replaceFaceImg = new Image<Bgra, Byte>(FacesPath + newFacePath);
-            //due to use case not needed
-            //Image<Gray, byte> replaceFaceGreyscale = replaceFaceImg.Convert<Gray, byte>();
-            //var greyCoordinates = Classifiers[3].DetectMultiScale(replaceFaceGreyscale, 1.01, 10, Size.Empty); //should only be one per
-            //if (greyCoordinates.Count() > 0)
-            //{
-            //    Rectangle roi = new Rectangle(greyCoordinates[0].X, greyCoordinates[0].Y, greyCoordinates[0].Width, greyCoordinates[0].Height);
-            //    replaceFaceImg.ROI = roi;
-            //    var replaceFace = replaceFaceImg.Copy();
-            //    return replaceFace;
-            //}
-                return replaceFaceImg; 
         }
 
         public string DownloadGif(string url)
